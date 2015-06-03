@@ -1,16 +1,23 @@
 import unittest
-import {{ name }}
+import {{name}}
 
-{% for testcase in tesetcases %}
-class Test{{ testcase.name }}{unittest.TestCase}:
+{% for test in tests %}
+class Test{{ name }}(unittest.TestCase):
     def setUp(self):
         return
 
     def tearDown(self):
         return
 
-    {% for test in tests %}
-    def test_{{ test.name }}(self):
+    {% for key, value in tests.iteritems() %}
+    def test_{{ key }}(self):
+        {% for instance in value.test_instances %}
+        self.assertEqual({{name}}.{{ key }}(
+            {%- for input in instance["input"] -%}
+            {{input}}{% if not loop.last %}, {% endif %}
+            {%- endfor -%}
+        ), {{ instance["output"] }})
+        {% endfor %}
         return
     {% endfor %}
 
