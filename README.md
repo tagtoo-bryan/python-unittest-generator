@@ -6,17 +6,14 @@ Auto generating unit testing file and description for python class
 #### schema format
 
 ```
-name: [name of module]
-path: [path for module]
-tests: {
-    [tested method]: {
-		mock: {},
-		test_instances: {
-			{ input: , output: , type: }
-		}
-	},
-	...
-}
+name: "name of module"
+path: "path for module"
+tests:
+    "name of tested method":
+        test_instances:
+            - input: [input1, input2, ...]
+            - output: 'output'
+    ...
 ```
 
 

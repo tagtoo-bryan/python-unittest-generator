@@ -1,7 +1,6 @@
 import unittest
-import {{name}}
+{% if path != "" %}from {{path}} {% endif %}import {{name}}
 
-{% for test in tests %}
 class Test{{ name }}(unittest.TestCase):
     def setUp(self):
         return
@@ -19,9 +18,9 @@ class Test{{ name }}(unittest.TestCase):
         ), {{ instance["output"] }})
         {% endfor %}
         return
+
     {% endfor %}
 
-{% endfor %}
 
 
 if __name__ == '__main__':

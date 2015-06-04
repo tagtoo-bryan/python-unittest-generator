@@ -1,11 +1,16 @@
 name: math
 path: ""
 
-tests: {
-    ceil: {
-        mock: {},
-        test_instances: [
-            { input: [1.2], output: 2.0 }
-        ],
-    },
-}
+tests:
+    ceil:
+        test_instances:
+            - input: [1.2]
+              output: 2.0
+            - input: [-1.2]
+              output: -1.0
+
+    copysign:
+        test_instances:
+            - input: [1.2, -2.3]
+              output: -1.2
+
