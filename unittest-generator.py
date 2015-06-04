@@ -9,6 +9,8 @@ env = jinja2.Environment(
 )
 template = env.get_template('unittest.pyt')
 testlist = os.listdir("./schemas")
+testlist = [name for name in testlist if ".yml" in name]
+
 for i in range(len(testlist)):
     testlist[i] = testlist[i].replace(".yml", "")
 

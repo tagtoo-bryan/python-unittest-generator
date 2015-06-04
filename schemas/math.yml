@@ -1,0 +1,11 @@
+name: math
+path: ""
+
+tests: {
+    ceil: {
+        mock: {},
+        test_instances: [
+            { input: [1.2], output: 2.0 }
+        ],
+    },
+}
