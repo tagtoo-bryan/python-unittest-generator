@@ -1,16 +1,17 @@
-name: math
+name: "math"
 path: ""
 
 tests:
     ceil:
-        test_instances:
-            - input: [1.2]
-              output: 2.0
-            - input: [-1.2]
-              output: -1.0
+        cases:
+            - args: [1.2]
+              kwargs: {}
+              checktype: "Equal"
+            - args: ["5"]
+              checktype: "Raises"
 
     copysign:
-        test_instances:
-            - input: [1.2, -2.3]
-              output: -1.2
+        cases:
+            - args: [1.2, -2.3]
+              checktype: "Equal"
 
