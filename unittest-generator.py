@@ -52,7 +52,6 @@ def input_padding(config):
             case["kwargs"] = {} if "kwargs" not in case else case["kwargs"]
             for count, arg in enumerate(case["args"]):
                 if isinstance(arg, basestring):
-                    import pdb;pdb.set_trace()
                     case["args"][count] = '"' + arg + '"'
 
             for k, arg in case["kwargs"].iteritems():
