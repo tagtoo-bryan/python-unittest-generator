@@ -11,8 +11,9 @@ path: "path for module"
 tests:
     "name of tested method":
         test_instances:
-            - input: [input1, input2, ...]
-            - output: 'output'
+            - args: [arg1, arg2, ...]
+            - kwargs: {kwarg1: value1, kwarg2, value2, ......}
+            - checktype: "Equal"
     ...
 ```
 
