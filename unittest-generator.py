@@ -37,8 +37,10 @@ def catch_output(config):
                 kwargs = case.get("kwargs", {})
                 result = _method(*args, **kwargs)
                 case["result"] = result
+                case["error"] = False
             except Exception as e:
                 case["result"] = e.__class__.__name__
+                case["error"] = True
 
     return config
 

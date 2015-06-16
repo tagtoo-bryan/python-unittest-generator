@@ -9,9 +9,26 @@ class Testmath(unittest.TestCase):
         return
 
     def test_copysign(self):
+
+        result = math.copysign(1.2, -2.3)
+
+        self.assertEqual(result, -1.2)
+
+
         return
 
     def test_ceil(self):
+
+        result = math.ceil(1.2)
+
+        self.assertEqual(result, 2.0)
+
+
+
+
+        self.assertRaises(TypeError, math.ceil,"m")
+
+
         return
 
 
