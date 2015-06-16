@@ -3,15 +3,11 @@ path: ""
 
 tests:
     ceil:
-        cases:
-            - args: [1.2]
-              kwargs: {}
-              checktype: "Equal"
-            - args: ["5"]
-              checktype: "Raises"
+        - args: [1.2]
+          kwargs: {}
+        - args: ["m"]
 
     copysign:
-        cases:
-            - args: [1.2, -2.3]
-              checktype: "Equal"
+        - args: [1.2, -2.3]
+
 

@@ -31,7 +31,7 @@ def catch_output(config):
         except:
             pass
 
-        for case in value["cases"]:
+        for case in value:
             try:
                 args = case.get("args", [])
                 kwargs = case.get("kwargs", {})
@@ -47,7 +47,7 @@ def input_padding(config):
     # pad "kwargs" key and add '"' for string input
     
     for key, value in config["tests"].iteritems():
-        for case in value["cases"]:
+        for case in value:
             case["args"] = [] if "args" not in case else case["args"]
             case["kwargs"] = {} if "kwargs" not in case else case["kwargs"]
             for count, arg in enumerate(case["args"]):
