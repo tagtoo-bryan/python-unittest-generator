@@ -31,14 +31,16 @@ def catch_output(config):
         except:
             pass
 
-        for case in value["cases"]:
+        for case in value:
             try:
                 args = case.get("args", [])
                 kwargs = case.get("kwargs", {})
                 result = _method(*args, **kwargs)
                 case["result"] = result
+                case["error"] = False
             except Exception as e:
                 case["result"] = e.__class__.__name__
+                case["error"] = True
 
     return config
 
@@ -47,12 +49,11 @@ def input_padding(config):
     # pad "kwargs" key and add '"' for string input
     
     for key, value in config["tests"].iteritems():
-        for case in value["cases"]:
+        for case in value:
             case["args"] = [] if "args" not in case else case["args"]
             case["kwargs"] = {} if "kwargs" not in case else case["kwargs"]
             for count, arg in enumerate(case["args"]):
                 if isinstance(arg, basestring):
-                    import pdb;pdb.set_trace()
                     case["args"][count] = '"' + arg + '"'
 
             for k, arg in case["kwargs"].iteritems():

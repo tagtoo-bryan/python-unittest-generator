@@ -14,6 +14,7 @@ class Testmath(unittest.TestCase):
 
         self.assertEqual(result, -1.2)
 
+
         return
 
     def test_ceil(self):
@@ -23,7 +24,9 @@ class Testmath(unittest.TestCase):
         self.assertEqual(result, 2.0)
 
 
-        self.assertRaises(TypeError, math.ceil,"5")
+
+
+        self.assertRaises(TypeError, math.ceil,"m")
 
 
         return

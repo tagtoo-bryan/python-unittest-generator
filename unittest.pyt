@@ -1,5 +1,5 @@
 import unittest
-{% if path != "" %}from {{path}} {% endif %}import {{ name }}
+{% if path != "" %}from {{ path }} {% endif %}import {{ name }}
 
 class Test{{ name }}(unittest.TestCase):
     def setUp(self):
@@ -10,15 +10,16 @@ class Test{{ name }}(unittest.TestCase):
 
     {% for key, value in tests.iteritems() %}
     def test_{{ key }}(self):
-        {% for case in value.cases %}
+        {% for case in value %}
 
-        {% if case["checktype"] == "Raises" %}
+        {% if case["error"] %}
+
         self.assertRaises({{ case["result"] }}, {{ name }}.{{ key }},
             {%- for arg in case["args"] -%}
             {{ arg }}{% if not loop.last %}, {% endif %}
             {%- endfor -%}
 
-            {%- if kwargs -%}, 
+            {%- if kwargs -%},
 
             {%- for k, arg in case["kwargs"].iteritems() -%}
             {{ k }}={{ arg }}{% if not loop.last %}, {% endif %}
@@ -26,6 +27,7 @@ class Test{{ name }}(unittest.TestCase):
 
             {%- endif -%}
         )
+
         {% else %}
         result = {{ name }}.{{ key }}(
             {%- for arg in case["args"] -%}
@@ -40,11 +42,9 @@ class Test{{ name }}(unittest.TestCase):
 
             {%- endif -%}
         )
-        {% endif %}
 
-        {% if case["checktype"] == "Equal" %}
-        self.assert{{ case["checktype"] }}(result, {{ case["result"] }})
-        {% else %}
+        self.assertEqual(result, {{ case["result"] }})
+
         {% endif %}
 
         {% endfor %}
