@@ -1,0 +1,64 @@
+module: "facebook"
+package: ""
+
+tests:
+    version_2_0:
+        call_chain: ["GraphAPI", "get_version"]
+        call_type:  ["method", "method"]
+        cases:
+            - [ {"args": [], "kwargs": {"version": 2.0}}, {} ]
+
+    version_2_1:
+        call_chain: ["GraphAPI", "get_version"]
+        call_type:  ["method", "method"]
+        cases:
+            - [{args: [], kwargs: {version: 2.1}}, {}]
+
+    version_2_2:
+        call_chain: ["GraphAPI", "get_version"]
+        call_type:  ["method", "method"]
+        cases:
+            - [{args: [], kwargs: {version: 2.2}}, {}]
+
+    version_2_3:
+        call_chain: ["GraphAPI", "get_version"]
+        call_type:  ["method", "method"]
+        cases:
+            - [{args: [], kwargs: {version: 2.3}}, {}]
+
+    invalid_version:
+        call_chain: ["GraphAPI", "get_version"]
+        call_type:  ["method", "method"]
+        cases:
+            - [{args: [], kwargs: {version: 1.2}}, {}]
+
+    invalid_format:
+        call_chain: ["GraphAPI", "get_version"]
+        call_type:  ["method", "method"]
+        cases:
+            - [{kwargs: {version: "2.a"}}, {}]
+            - [{kwargs: {version: "a.1"}}, {}]
+            - [{kwargs: {version: 2.23}}, {}]
+            - [{kwargs: {version: "2.23"}}, {}]
+
+
+    fql:
+        call_chain: ["GraphAPI", "fql", "", "", ""]
+        call_type: ["method", "method", "dict", "array", "dict"]
+        cases:
+            - [{}, {}, "data", 0, "app_id"]
+
+    auth_url:
+        call_chain: ["auth_url"]
+        call_type: ["method"]
+        cases:
+            - [ {args: ["app_id", "redirect_url"], kwargs: {"perms": ["email", "birthdaty"]}} ]
+
+    extend_access_token:
+        call_chain: ["GraphAPI", "extend_access_token"]
+        call_type: ["method", "method"]
+        cases:
+            - [ {}, {args: ["app_id", "secret"]} ]
+
+
+
