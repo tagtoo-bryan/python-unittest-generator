@@ -2,6 +2,12 @@ module: "facebook"
 package: ""
 
 tests:
+    get_app_access_token:
+        call_chain: ["get_app_access_token"]
+        call_type: ["method"]
+        cases:
+            - [ {args: ["appid", "secret"]} ]
+
     version_2_0:
         call_chain: ["GraphAPI", "get_version"]
         call_type:  ["method", "method"]

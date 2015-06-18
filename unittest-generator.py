@@ -17,15 +17,15 @@ for i in range(len(testlist)):
 
 def catch_output(config):
     try:
-        if config["path"] == "":
-            _module = __import__(config["name"])
+        if config["package"] == "":
+            _module = __import__(config["module"])
         else:
-            _module = __import__(config["path"], fromlist = [config["name"]])
+            _module = __import__(config["package"], fromlist = [config["module"]])
     except ImportError:
         # Display error message
         return
 
-    for key, value in config["tests"].iteritems():
+    for key, value in config["methods"].iteritems():
         try:
             _method = getattr(_module, key)
         except:
@@ -48,17 +48,17 @@ def catch_output(config):
 def input_padding(config):
     # pad "kwargs" key and add '"' for string input
     
-    for key, value in config["tests"].iteritems():
+    for key, value in config["methods"].iteritems():
         for case in value:
             case["args"] = [] if "args" not in case else case["args"]
             case["kwargs"] = {} if "kwargs" not in case else case["kwargs"]
             for count, arg in enumerate(case["args"]):
                 if isinstance(arg, basestring):
-                    case["args"][count] = '"' + arg + '"'
+                    case["args"][count] = repr(arg)
 
             for k, arg in case["kwargs"].iteritems():
                 if type(arg) == "str":
-                    case["kwargs"][k] = '"' + arg + '"'
+                    case["kwargs"][k] = repr(arg)
 
     return config
 
@@ -69,12 +69,15 @@ def gen_model():
             config = catch_output(config)
             config = input_padding(config)
             content = template.render(**config)
-            with open('./test_files/test_%s.py' % config['name'], 'w') as ofile:
+            with open('./test_files/test_%s.py' % testcase, 'w') as ofile:
                 ofile.write(content)
 
 def run_test():
     for testcase in testlist:
-        os.system("python ./test_files/test_%s.py" % testcase)
+        try:
+            os.system("python ./test_files/test_%s.py" % testcase)
+        except:
+            pass
 
 gen_model()
 run_test()
