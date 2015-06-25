@@ -1,6 +1,9 @@
 import jinja2
 import yaml
 import os
+import mock
+import contextlib
+import re
 
 env = jinja2.Environment(
     trim_blocks=True,
@@ -15,6 +18,7 @@ for i in range(len(testlist)):
     testlist[i] = testlist[i].replace(".yml", "")
 
 
+
 def catch_output(config):
     try:
         if config["package"] == "":
@@ -22,25 +26,59 @@ def catch_output(config):
         else:
             _module = __import__(config["package"], fromlist = [config["module"]])
     except ImportError:
-        # Display error message
+        # Todo: Display error message
         return
 
-    for key, value in config["methods"].iteritems():
-        try:
-            _method = getattr(_module, key)
-        except:
-            pass
+    mock_modules = []
+    for module_str in config["mock"]["modules"]:
+        mock_modules.append(mock.patch(config["module"] + '.' + module_str))
 
-        for case in value:
-            try:
-                args = case.get("args", [])
-                kwargs = case.get("kwargs", {})
-                result = _method(*args, **kwargs)
-                case["result"] = result
-                case["error"] = False
-            except Exception as e:
-                case["result"] = e.__class__.__name__
-                case["error"] = True
+    for key, value in config["methods"].iteritems():
+        # config = parse_call(value["call"])
+
+        _attr = _module
+
+        with contextlib.nested(mock_modules) as mocks:
+            for call in value["calls"]:
+                try:
+                    _attr = getattr(_attr, call["name"])
+                    if value["type"] == "last_method":
+                        _method = _attr
+                    elif value["type"] == "method":
+                        call["args"] = [] if "args" not in call else call["args"]
+                        call["kwargs"] = [] if "kwargs" not in call else call["kwargs"]
+                        _attr = _attr(*call["args"], **call["kwargs"])
+                    elif value["type"] == "variable":
+                        pass
+                    else:
+                        pass
+                except:
+                    # Todo: Display error message
+                    pass
+
+            for case in value["cases"]:
+                try:
+                    result = _method(*case["args"], **case["kwargs"])
+                    if isinstance(result, mock.MagicMock):
+                        # I want to find which  mock object should be set return_value to make the result has a return value, not a MagicMock object
+                        name = re.search("name=\'[^']*\'", repr(result)).group().split('\'')[1]
+
+                        result = config["module"] + '.' + name
+                        case["type"] = "mock"
+                    else:
+                        case["type"] = "success"
+                except Exception as e:
+                    result = e.__class__.__name__
+                    case["type"] = "error"
+
+                case["result"] = repr(result)
+
+                for index, m in enumerate(mocks):
+                    case["mocks"] = []
+                    for call in m.mock_calls:
+                        param_str = repr(call).split("call")[1]
+                        case["mocks"].append( {"module": mock_modules[index], "param_str": param_str} )
+
 
     return config
 
@@ -62,10 +100,17 @@ def input_padding(config):
 
     return config
 
+
+
+
 def gen_model():
     for testcase in testlist:
         with open('./schemas/%s.yml' % testcase) as ifile:
             config = yaml.load(ifile)
+
+            import pdb;pdb.set_trace()
+
+
             config = catch_output(config)
             config = input_padding(config)
             content = template.render(**config)

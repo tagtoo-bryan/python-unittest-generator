@@ -1,70 +1,45 @@
 module: "facebook"
 package: ""
 
-tests:
-    get_app_access_token:
-        call_chain: ["get_app_access_token"]
-        call_type: ["method"]
-        cases:
-            - [ {args: ["appid", "secret"]} ]
+mock:
+    modules: ["requests"]
 
-    version_2_0:
-        call_chain: ["GraphAPI", "get_version"]
-        call_type:  ["method", "method"]
-        cases:
-            - [ {"args": [], "kwargs": {"version": 2.0}}, {} ]
+methods:
+    get_object:
+        # hope to be in this form
+        # call: "facebook.GraphAPI(access_token='your_token', version='2.2').get_object"
+        # cases:
+        #     - { args: [...], kwargs: {...} }
 
-    version_2_1:
-        call_chain: ["GraphAPI", "get_version"]
-        call_type:  ["method", "method"]
+        calls:
+            - { name: "GraphAPI", kwargs: {access_token: "post_id", version: "2.2"}, type: "method" }
+            - { name: "get_object", type: "last_method" }
         cases:
-            - [{args: [], kwargs: {version: 2.1}}, {}]
+            - { kwargs: {id: "post_id"} }
 
-    version_2_2:
-        call_chain: ["GraphAPI", "get_version"]
-        call_type:  ["method", "method"]
+    get_objects:
+        calls:
+            - { name: "GraphAPI", kwargs: {access_token: "post_id", version: "2.2"}, type: "method" }
+            - { name: "get_objects", type: "last_method" }
         cases:
-            - [{args: [], kwargs: {version: 2.2}}, {}]
+            - { kwargs: {ids: "post_ids"} }
 
-    version_2_3:
-        call_chain: ["GraphAPI", "get_version"]
-        call_type:  ["method", "method"]
+    put_wall_post:
+        calls:
+            - { name: "GraphAPI", kwargs: {access_token: "post_id", version: "2.2"}, type: "method" }
+            - { name: "put_wall_post", type: "last_method" }
         cases:
-            - [{args: [], kwargs: {version: 2.3}}, {}]
-
-    invalid_version:
-        call_chain: ["GraphAPI", "get_version"]
-        call_type:  ["method", "method"]
-        cases:
-            - [{args: [], kwargs: {version: 1.2}}, {}]
-
-    invalid_format:
-        call_chain: ["GraphAPI", "get_version"]
-        call_type:  ["method", "method"]
-        cases:
-            - [{kwargs: {version: "2.a"}}, {}]
-            - [{kwargs: {version: "a.1"}}, {}]
-            - [{kwargs: {version: 2.23}}, {}]
-            - [{kwargs: {version: "2.23"}}, {}]
-
-
-    fql:
-        call_chain: ["GraphAPI", "fql", "", "", ""]
-        call_type: ["method", "method", "dict", "array", "dict"]
-        cases:
-            - [{}, {}, "data", 0, "app_id"]
-
-    auth_url:
-        call_chain: ["auth_url"]
-        call_type: ["method"]
-        cases:
-            - [ {args: ["app_id", "redirect_url"], kwargs: {"perms": ["email", "birthdaty"]}} ]
-
-    extend_access_token:
-        call_chain: ["GraphAPI", "extend_access_token"]
-        call_type: ["method", "method"]
-        cases:
-            - [ {}, {args: ["app_id", "secret"]} ]
+            - { kwargs: {
+                    message: "put message on the wall......"
+                    attachment: {
+                        'name': 'Link name'
+                        'link': 'http://www.example.com/',
+                        'caption': 'Check out this example',
+                        'description': 'This is a longer description of the attachment',
+                        'picture': 'http://www.example.com/thumbnail.jpg'
+                    }
+                } 
+              }
 
 
 
