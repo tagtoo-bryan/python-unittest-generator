@@ -1,8 +1,7 @@
 module: "facebook"
 package: ""
 
-mock:
-    modules: ["requests"]
+mock: ["requests"]
 
 methods:
     get_object:
@@ -30,14 +29,14 @@ methods:
             - { name: "put_wall_post", type: "last_method" }
         cases:
             - { kwargs: {
-                    message: "put message on the wall......"
+                    message: "put message on the wall......",
                     attachment: {
-                        'name': 'Link name'
+                        'name': 'Link name',
                         'link': 'http://www.example.com/',
                         'caption': 'Check out this example',
                         'description': 'This is a longer description of the attachment',
-                        'picture': 'http://www.example.com/thumbnail.jpg'
-                    }
+                        'picture': 'http://www.example.com/thumbnail.jpg',
+                    },
                 } 
               }
 
