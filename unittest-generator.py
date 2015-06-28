@@ -29,9 +29,17 @@ def patch_func(func, *config):
     return run_func
 
 
+def config_padding(config):
+    for key, value in config["methods"].iteritems():
+        for case in value["cases"]:
+            case["args"] = [] if "args" not in case else case["args"]
+            case["kwargs"] = [] if "kwargs" not in case else case["kwargs"]
+            case["mock_done"] = False
+            case["mocks"] = {}
+            for mock_module in config["mock"]:
+                case["mocks"][mock_module] = {}
 
-
-def set_mock_return_value(config, mocks)
+    return config
 
 
 
@@ -48,34 +56,44 @@ def test_mocks(config):
     mock_modules = [ config["module"] + '.' + key for key, value in config["mock"].iteritems() ]
     for key, value in config["methods"].iteritems():
         # config = parse_call(value["call"])
-        
-
-
 
         _attr = _module
-        with contextlib.nested(*mock_modules) as mocks:
-            for key, value in config["mock"].iteritems():
-                
-                
-
-            for call in value["calls"]:
-                try:
-                    _attr = getattr(_attr, call["name"])
-                    if call["type"] == "last_method":
-                        _method = _attr
-                    elif call["type"] == "method":
-                        call["args"] = [] if "args" not in call else call["args"]
-                        call["kwargs"] = [] if "kwargs" not in call else call["kwargs"]
-                        _attr = _attr(*call["args"], **call["kwargs"])
-                    elif call["type"] == "variable":
-                        pass
-                    else:
-                        pass
-                except Exception as e:
-                    # Todo: Display error message
+        for call in value["calls"]:
+            try:
+                _attr = getattr(_attr, call["name"])
+                if call["type"] == "last_method":
+                    _method = _attr
+                elif call["type"] == "method":
+                    call["args"] = [] if "args" not in call else call["args"]
+                    call["kwargs"] = [] if "kwargs" not in call else call["kwargs"]
+                    _attr = _attr(*call["args"], **call["kwargs"])
+                elif call["type"] == "variable":
                     pass
+                else:
+                    pass
+            except Exception as e:
+                # Todo: Display error message
+                pass
 
-            for case in value["cases"]:
+        for call in value["calls"]:
+            try:
+                _attr = getattr(_attr, call["name"])
+                if call["type"] == "last_method":
+                    _method = _attr
+                elif call["type"] == "method":
+                    call["args"] = [] if "args" not in call else call["args"]
+                    call["kwargs"] = [] if "kwargs" not in call else call["kwargs"]
+                    _attr = _attr(*call["args"], **call["kwargs"])
+                elif call["type"] == "variable":
+                    pass
+                else:
+                    pass
+            except Exception as e:
+                # Todo: Display error message
+                pass
+
+        for count, case in enumerate(value["cases"]):
+            with contextlib.nested(*mock_modules) as mocks:
                 try:
                     case["args"] = [] if "args" not in case else case["args"]
                     case["kwargs"] = [] if "kwargs" not in case else case["kwargs"]
@@ -84,12 +102,17 @@ def test_mocks(config):
                     # print e.__class__.__name__
                     pass
 
-                for index, m in enumerate(mocks):
-                    for mcall in m.mock_calls:
-                        mcall_str = repr(mcall).replace("call", config["module"] + '.' + config["mock"]["modules"][index])
-                        mock_attrs.append(mcall_str)
+                for index, m in enumerate(mock_modules):
+                    for mcall in m.method_calls:
+                        real_call = repr(mcall).replace("call", mock_modules[index])
+                        value["cases"][count]["mocks"] = real_call
 
-            config["methods"][key]["mocks"] = mock_attrs
+
+
+
+
+
+        config["methods"][key]["mocks"] = mock_attrs
 
 
     return config
@@ -115,7 +138,6 @@ def transform_mock(config):
 
         config["methods"][key]["mocks"] = new_mocks
 
-    import pdb;pdb.set_trace()
 
     return config
 
@@ -124,7 +146,10 @@ def gen_model():
     for testcase in filelist:
         with open('./schemas/%s.yml' % testcase) as ifile:
             config = yaml.load(ifile)
-            config = add_mocks_key_into_config(config)
+            config = config_padding(config)
+
+
+
             config = catch_output(config)
             config = transform_mock(config)
 
