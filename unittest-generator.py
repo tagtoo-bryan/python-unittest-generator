@@ -18,32 +18,48 @@ for i in range(len(filelist)):
     filelist[i] = filelist[i].replace(".yml", "")
 
 
+def patch_func(func, config, method_name, mock_name):
+    def run(*args, **kwargs):
+        error = None
+        try:
+            result = func(*args, **kwargs)
+            result_type = 'success'
+        except Exception as e:
+            error = e
+            result = e.__class__.__name__
+            result_type = 'error'
 
+        for case in config["methods"][method_name]["mocks"][mock_name]["cases"]:
+            if case["args"] == args and case["kwargs"] == kwargs:
+               return
 
-def patch_func(func, *config):
-    def run_func(*args, **kwargs):
-        # config["inputs"]
-        # config["outputs"]
-        func(*args, **kwargs)
+        config["methods"][method_name]["mocks"][mock_name]["cases"].append(
+            { "args": args, "kwargs": kwargs, "return_value": result, "return_type": result_type }
+        )
 
-    return run_func
+        if error:
+            raise(error)
+
+        return result
+
+    return run
+
 
 
 def config_padding(config):
     for key, value in config["methods"].iteritems():
+        value["mocks"] = {}
+        for call in value["calls"]:
+            call["args"] = [] if "args" not in call else call["args"]
+            call["kwargs"] = [] if "kwargs" not in call else call["kwargs"]
         for case in value["cases"]:
             case["args"] = [] if "args" not in case else case["args"]
             case["kwargs"] = [] if "kwargs" not in case else case["kwargs"]
-            case["mock_done"] = False
-            case["mocks"] = {}
-            for mock_module in config["mock"]:
-                case["mocks"][mock_module] = {}
 
     return config
 
 
-
-def test_mocks(config):
+def find_mocks(config) :
     try:
         if config["package"] == "":
             _module = __import__(config["module"])
@@ -53,9 +69,72 @@ def test_mocks(config):
         # Todo: Display error message
         return
 
-    mock_modules = [ config["module"] + '.' + key for key, value in config["mock"].iteritems() ]
+    mock_modules = [ config["module"] + '.' + mock_module for mock_module in config["mock"] ]
     for key, value in config["methods"].iteritems():
-        # config = parse_call(value["call"])
+        _attr = _module
+        for call in value["calls"]:
+            try:
+                _attr = getattr(_attr, call["name"])
+                if call["type"] == "last_method":
+                    _method = _attr
+                elif call["type"] == "method":
+                    call["args"] = [] if "args" not in call else call["args"]
+                    call["kwargs"] = [] if "kwargs" not in call else call["kwargs"]
+                    _attr = _attr(*call["args"], **call["kwargs"])
+                elif call["type"] == "variable":
+                    pass
+                else:
+                    pass
+            except Exception as e:
+                # Todo: Display error message
+                pass
+
+        for case in value["cases"]:
+            with contextlib.nested(mock.patch(*mock_modules)) as mocks:
+                try:
+                    result = _method(*case["args"], **case["kwargs"])
+                except Exception as e:
+                    # print e.__class__.__name__
+                    pass
+
+            for index, m in enumerate(mock_modules):
+                for mcall in mocks[index].method_calls:
+                    real_call = re.search("^[^(]*", repr(mcall)).group().replace("call", m)
+                    if real_call not in value["mocks"]:
+                        value["mocks"][real_call] = {
+                            "calls": real_call.replace(config["module"] + ".", "").split('.'),
+                            "cases": []
+                        }
+
+    return config
+
+
+def real_run(config):
+    try:
+        if config["package"] == "":
+            _module = __import__(config["module"])
+        else:
+            _module = __import__(config["package"], fromlist = [config["module"]])
+    except ImportError:
+        # Todo: Display error message
+        return
+
+    mock_modules = [ config["module"] + '.' + mock_module for mock_module in config["mock"] ]
+    for key, value in config["methods"].iteritems():
+        _attr = _module
+        for name, content in value["mocks"].iteritems():
+            for call in content["calls"][:-1]:
+                try:
+                    _attr = getattr(_attr, call)
+                except Exception as e:
+                    # Todo: Display error message
+                    pass
+
+            try:
+                setattr(_attr, content["calls"][-1], patch_func(getattr(_attr, content["calls"][-1]), config, key, name))
+            except Exception as e:
+                # Todo: Display error message
+                pass
 
         _attr = _module
         for call in value["calls"]:
@@ -75,54 +154,16 @@ def test_mocks(config):
                 # Todo: Display error message
                 pass
 
-        for count, case in enumerate(value["cases"]):
-            with contextlib.nested(*mock_modules) as mocks:
-                try:
-                    case["args"] = [] if "args" not in case else case["args"]
-                    case["kwargs"] = [] if "kwargs" not in case else case["kwargs"]
-                    result = _method(*case["args"], **case["kwargs"])
-                except Exception as e:
-                    # print e.__class__.__name__
-                    pass
-
-                for index, m in enumerate(mock_modules):
-                    for mcall in m.method_calls:
-                        real_call = repr(mcall).replace("call", mock_modules[index])
-                        value["cases"][count]["mocks"] = real_call
-
-
-
-
-
-
-        config["methods"][key]["mocks"] = mock_attrs
-
+        for case in value["cases"]:
+            try:
+                result = _method(*case["args"], **case["kwargs"])
+                case["result_type"] = "success"
+            except Exception as e:
+                result = e.__class__.__name__
+                case["result_type"] = "error"
 
     return config
 
-
-
-
-
-def transform_mock(config):
-    # remove dummy mocks & chain the mocks
-    for key, value in config["methods"].iteritems():
-        new_mocks = []
-        for m in value["mocks"]:
-            ms = m.replace(re.search("\([^)]+\)", m).group(), "") if re.search("\([^)]+\)", m) else m
-            pre = False
-            for new_mock in new_mocks:
-                if ms.startswith(new_mock):
-                    #pre = True
-                    break
-
-            if not pre:
-                new_mocks.append(ms)
-
-        config["methods"][key]["mocks"] = new_mocks
-
-
-    return config
 
 
 def gen_model():
@@ -130,14 +171,8 @@ def gen_model():
         with open('./schemas/%s.yml' % testcase) as ifile:
             config = yaml.load(ifile)
             config = config_padding(config)
-
-
-
-            config = catch_output(config)
-            config = transform_mock(config)
-
-
-            config = input_padding(config)
+            config = find_mocks(config)
+            config = real_run(config)
             content = template.render(**config)
             with open('./test_files/test_%s.py' % testcase, 'w') as ofile:
                 ofile.write(content)
@@ -151,4 +186,26 @@ def run_test():
 
 gen_model()
 run_test()
+
+
+"""
+    I want the config be the form when using in the template, (repr before giving to template)
+
+    get_object:
+        calls:
+            - { name: 'GraphAPI', args: [], kwargs: {access_token: 'post_id', version: '2.2'}, type: 'method' }
+            - { name: 'get_object', type: 'last_method' }
+        cases:
+            - { args: [], kwargs: {id: 'post_id'}, result: object, result_type: 'error/success' }
+
+        mocks:{
+                  'facebook.requests.request': {
+                      calls: ['requests', 'request']
+                      cases:
+                          - { args: ['GET', 'http://www.google.com.tw'], kwargs: {}, return_value: '<HTTP 200>', return_type: 'success' }
+                          - { args: [], kwargs: {}, return_value: 'ParameterError?', return_type: 'error'}
+                  },
+              }
+
+"""
 
