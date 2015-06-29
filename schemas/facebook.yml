@@ -11,22 +11,22 @@ methods:
         #     - { args: [...], kwargs: {...} }
 
         calls:
-            - { name: "GraphAPI", kwargs: {access_token: "post_id", version: "2.2"}, type: "method" }
-            - { name: "get_object", type: "last_method" }
+            - { str: "GraphAPI(access_token='your_token', version='2.2')", name: "GraphAPI", kwargs: {access_token: "post_id", version: "2.2"}, type: "method" }
+            - { str: "get_object", name: "get_object", type: "last_method" }
         cases:
             - { kwargs: {id: "post_id"} }
 
     get_objects:
         calls:
-            - { name: "GraphAPI", kwargs: {access_token: "post_id", version: "2.2"}, type: "method" }
-            - { name: "get_objects", type: "last_method" }
+            - { str: "GraphAPI(access_token='your_token', version='2.2')", name: "GraphAPI", kwargs: {access_token: "post_id", version: "2.2"}, type: "method" }
+            - { str: "get_object", name: "get_objects", type: "last_method" }
         cases:
             - { kwargs: {ids: "post_ids"} }
 
     put_wall_post:
         calls:
-            - { name: "GraphAPI", kwargs: {access_token: "post_id", version: "2.2"}, type: "method" }
-            - { name: "put_wall_post", type: "last_method" }
+            - { str: "GraphAPI(access_token='your_token', version='2.2')", name: "GraphAPI", kwargs: {access_token: "post_id", version: "2.2"}, type: "method" }
+            - { str: "get_object", name: "put_wall_post", type: "last_method" }
         cases:
             - { kwargs: {
                     message: "put message on the wall......",

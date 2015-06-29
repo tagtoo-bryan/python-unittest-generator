@@ -1,53 +1,68 @@
+import mock
 import unittest
-{% if path != "" %}from {{ path }} {% endif %}import {{ name }}
+{% if package != "" %}from {{ package }} {% endif %}import {{ module }}
 
-class Test{{ name }}(unittest.TestCase):
+class Test{{ module }}(unittest.TestCase):
     def setUp(self):
         return
 
     def tearDown(self):
         return
 
-    {% for key, value in tests.iteritems() %}
+    {% for key, value in methods.iteritems() %}
     def test_{{ key }}(self):
-        {% for case in value %}
+        {% for key, mock in value["mocks"].iteritems() %}
+        def side_effect(*args, **kwargs):
+            {% for case in mock["cases"] %}
+            if args == {{ case["args"]}} and kwargs == {{ case["kwargs"] }}:
+                return {{ case["return_value"] }}
+            {% endfor%}
 
-        {% if case["error"] %}
-
-        self.assertRaises({{ case["result"] }}, {{ name }}.{{ key }},
-            {%- for arg in case["args"] -%}
-            {{ arg }}{% if not loop.last %}, {% endif %}
-            {%- endfor -%}
-
-            {%- if kwargs -%},
-
-            {%- for k, arg in case["kwargs"].iteritems() -%}
-            {{ k }}={{ arg }}{% if not loop.last %}, {% endif %}
-            {%- endfor -%}
-
-            {%- endif -%}
-        )
-
-        {% else %}
-        result = {{ name }}.{{ key }}(
-            {%- for arg in case["args"] -%}
-            {{ arg }}{% if not loop.last %}, {% endif %}
-            {%- endfor -%}
-
-            {%- if kwargs -%}, 
-
-            {%- for k, arg in case["kwargs"].iteritems() -%}
-            {{ k }}={{ arg }}{% if not loop.last %}, {% endif %}
-            {%- endfor -%}
-
-            {%- endif -%}
-        )
-
-        self.assertEqual(result, {{ case["result"] }})
-
-        {% endif %}
-
+        {{ key }} = mock.Mock(side_effect=side_effect)
         {% endfor %}
+
+        {% for case in value["cases"] %}
+            {% if case["result_type"] == "success" %}
+        result = {{ module }}.
+                {%- for call in value["calls"] -%}
+        {{ call["str"] }}{% if not loop.last %}.{% endif %}
+                {%- endfor -%}
+        (
+                {%- if case["args"] -%}
+                    {%- for arg in case["args"] -%}
+        {{ arg }}{% if not loop.last %}, {% endif %}
+                    {%- endfor -%}
+                {%- endif -%}
+                {%- if case["kwargs"] -%}
+                    {%- for kw, arg in case["kwargs"].iteritems() -%}
+        {{ kw }} = {{ arg }}{% if not loop.last %}, {% endif %}
+                    {%- endfor -%}
+                {%- endif -%}
+        )
+            {% elif case["result_type"] == "error" %}
+        try:
+            result = {{ module }}.
+                {%- for call in value["calls"] -%}
+            {{ call["str"] }}{% if not loop.last %}.{% endif %}
+                {%- endfor -%}
+            (
+                {%- if case["args"] -%}
+                    {%- for arg in case["args"] -%}
+            {{ arg }}{% if not loop.last %}, {% endif %}
+                    {%- endfor -%}
+                {%- endif -%}
+                {%- if case["kwargs"] -%}
+                    {%- for kw, arg in case["kwargs"].iteritems() -%}
+            {{ kw }} = {{ arg }}{% if not loop.last %}, {% endif %}
+                    {%- endfor -%}
+                {%- endif -%}
+            )
+        except Exception as e:
+            self.assertEqual(e.__class__.__name__, {{ case["result"] }})
+            {% endif %}
+        {% endfor %}
+
+
         return
 
     {% endfor %}

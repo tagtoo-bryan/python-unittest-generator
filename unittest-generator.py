@@ -34,7 +34,7 @@ def patch_func(func, config, method_name, mock_name):
                return
 
         config["methods"][method_name]["mocks"][mock_name]["cases"].append(
-            { "args": args, "kwargs": kwargs, "return_value": result, "return_type": result_type }
+            { "args": list(args), "kwargs": kwargs, "return_value": result, "return_type": result_type }
         )
 
         if error:
@@ -156,13 +156,34 @@ def real_run(config):
 
         for case in value["cases"]:
             try:
-                result = _method(*case["args"], **case["kwargs"])
+                case["result"] = _method(*case["args"], **case["kwargs"])
                 case["result_type"] = "success"
             except Exception as e:
-                result = e.__class__.__name__
+                case["result"] = e.__class__.__name__
                 case["result_type"] = "error"
 
     return config
+
+def repr_config(config):
+    for key, value in config["methods"].iteritems():
+        for case in value["cases"]:
+            case["result"] = repr(case["result"])
+            for index, arg in enumerate(case["args"]):
+                case["args"][index] = repr(arg)
+            for kw, arg in case["kwargs"].iteritems():
+                case["kwargs"][kw] = repr(arg)
+
+        for s, mock in value["mocks"].iteritems():
+            for case in mock["cases"]:
+                case["return_value"] = repr(case["return_value"])
+                for index, arg in enumerate(case["args"]):
+                    case["args"][index] = repr(arg)
+                for kw, arg in case["kwargs"].iteritems():
+                    case["kwargs"][kw] = repr(arg)
+
+    return config
+
+
 
 
 
@@ -173,6 +194,7 @@ def gen_model():
             config = config_padding(config)
             config = find_mocks(config)
             config = real_run(config)
+            config = repr_config(config)
             content = template.render(**config)
             with open('./test_files/test_%s.py' % testcase, 'w') as ofile:
                 ofile.write(content)
